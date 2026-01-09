@@ -1,75 +1,94 @@
-from threading import Lock, Event
-import config
-from minecraft_key_logger import MinecraftKeyLogger
-from minecraft_mouse_logger import MinecraftMouseLogger
-import logger_controller as logc
-from utils import mc_is_active_window, KeyEventId, MouseEventId
+import config, logging, json
+import csv_logger_controller as controller
+from event_ids import KeyEventId, MouseEventId
 from pynput import keyboard, mouse
 from typing import Literal
-import logging
+from utils import translate_monitor_pos, current_timestamp, mc_is_active_window
+from csv_logger import CsvLogger
+from threading import Lock, Event
 
 logging.basicConfig(level=logging.INFO)
 
-event_lock: Lock = Lock()
-keylogger: MinecraftKeyLogger = MinecraftKeyLogger()
-mouselogger: MinecraftMouseLogger = MinecraftMouseLogger()
-mouse_listener_exit_event: Event = Event()
+STOP_KEY: keyboard.KeyCode = config.LOGGER_CONTROLS["STOP"]
+EXIT_KEY: keyboard.KeyCode = config.LOGGER_CONTROLS["EXIT"]
+PAUSE_KEY: keyboard.KeyCode = config.LOGGER_CONTROLS["PAUSE"]
+EVENT_LOCK: Lock = Lock()
+MOUSE_LISTENER_EXIT_EVENT: Event = Event()
+KEYLOGGER: CsvLogger = CsvLogger(["key_id", "event_id", "timestamp"], "keylog")
+MOUSELOGGER: CsvLogger = CsvLogger(["mouse_x", "mouse_y", "event_id", "timestamp"], "mouselog")
 
 def handle_key_press(key: keyboard.Key | keyboard.KeyCode | None) -> Literal[False] | None:
     """Handle a key press event received by a pynput keyboard listener.
 
-    Depending on the given key, keylogger state and currently active window, can pause, resume, stop or start the keylogger, or log the key event to a file.
+    Depending on the given key, the keylogger state and currently active window, can pause, resume, stop or start loggers, or log the key event to the keylogger's file.
 
     Arguments
     ---------
     key
-        The key associated with the keyboard event.
+        The key associated with the key press event.
 
     Returns
     -------
     `False` if the user pressed the exit key (stop listening to key events) otherwise `None`.
     """
-    with event_lock:
-        if key == config.LOGGER_CONTROLS["EXIT"]:
-            keylogger.stop()
-            mouselogger.stop()
-            mouse_listener_exit_event.set()
+    with EVENT_LOCK:
+        # handle user wants to exit
+        if key == EXIT_KEY:
+            KEYLOGGER.stop()
+            MOUSELOGGER.stop()
+            MOUSE_LISTENER_EXIT_EVENT.set()
             logging.info("Stopped listening for keyboard input")
 
             return False # return False to signal to pynput keyboard listener to stop
         # fi
 
-        if (not mc_is_active_window()) and logc.INSTANCE.can_pause():
-            logc.INSTANCE.pause()
-            keylogger.pause()
-            mouselogger.pause()
-        elif key == config.LOGGER_CONTROLS["STOP"]:
-            if logc.INSTANCE.can_start():
-                logc.INSTANCE.start()
-                keylogger.start()
-                mouselogger.start()
-            elif logc.INSTANCE.can_stop():
-                logc.INSTANCE.stop()
-                keylogger.stop()
-                mouselogger.stop()
+        # pause the logger if Minecraft is not focused
+        if (not mc_is_active_window()) and controller.INSTANCE.can_pause():
+            KEYLOGGER.pause()
+            MOUSELOGGER.pause()
+            controller.INSTANCE.pause()
+
+        # handle user wants to stop current loggers or start new loggers
+        elif key == STOP_KEY:
+            if controller.INSTANCE.can_start():
+                KEYLOGGER.start()
+                MOUSELOGGER.start()
+                controller.INSTANCE.start()
+
+            elif controller.INSTANCE.can_stop():
+                KEYLOGGER.stop()
+                MOUSELOGGER.stop()
+                controller.INSTANCE.stop()
             # fi
-        elif key == config.LOGGER_CONTROLS["PAUSE"]:
-            if logc.INSTANCE.can_resume():
-                logc.INSTANCE.resume()
-                keylogger.resume()
-                mouselogger.resume()
-            elif logc.INSTANCE.can_pause():
-                logc.INSTANCE.pause()
-                keylogger.pause()
-                mouselogger.pause()
+
+        # handle user wants to pause or resume current loggers
+        elif key == PAUSE_KEY:
+            if controller.INSTANCE.can_resume():
+                KEYLOGGER.resume()
+                MOUSELOGGER.resume()
+                controller.INSTANCE.resume()
+
+            elif controller.INSTANCE.can_pause():
+                KEYLOGGER.pause()
+                MOUSELOGGER.pause()
+                controller.INSTANCE.pause()
             # fi
-        elif logc.INSTANCE.can_log() and key in config.KEY_IDS:
+
+        # handle logging of key press event
+        elif controller.INSTANCE.can_log() and key in config.KEY_IDS:
             key_id: str = config.KEY_IDS[key]
+            
+            if controller.INSTANCE.is_pressed(key_id): return None
 
-            if logc.INSTANCE.is_pressed(key_id): return None
+            data: dict[str, str] = {
+                "key_id": key_id,
+                "event_id": KeyEventId.PRESS.value,
+                "timestamp": current_timestamp()
+            }
 
-            logc.INSTANCE.was_pressed(key_id)
-            keylogger.log(config.KEY_IDS[key], KeyEventId.PRESS)
+            controller.INSTANCE.was_pressed(key_id)
+            KEYLOGGER.log(data)
+            logging.info(json.dumps(data))
         # fi
     # htiw
 
@@ -79,29 +98,35 @@ def handle_key_press(key: keyboard.Key | keyboard.KeyCode | None) -> Literal[Fal
 def handle_key_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
     """Handle a key release event received by a pynput keyboard listener.
 
-    If Minecraft is not the currently focused window, will pause the keylogger. 
+    If Minecraft is not the currently focused window, will pause the mouse and key loggers.
 
     Arguments
     ---------
     key
         The key associated with the keyboard event.
     """
-    with event_lock:
-        if (not mc_is_active_window()) and logc.INSTANCE.can_pause():
-            logc.INSTANCE.pause()
-            keylogger.pause()
-            mouselogger.pause()
+    with EVENT_LOCK:
+        # pause the logger if Minecraft is not focused
+        if (not mc_is_active_window()) and controller.INSTANCE.can_pause():
+            KEYLOGGER.pause()
+            MOUSELOGGER.pause()
+            controller.INSTANCE.pause()
 
-            return
-        # fi
-
-        if logc.INSTANCE.can_log() and key in config.KEY_IDS:
+        # handle logging of key release event
+        elif controller.INSTANCE.can_log() and key in config.KEY_IDS:
             key_id: str = config.KEY_IDS[key]
 
-            if not logc.INSTANCE.is_pressed(key_id): return
+            if not controller.INSTANCE.is_pressed(key_id): return
 
-            logc.INSTANCE.was_released(key_id)
-            keylogger.log(config.KEY_IDS[key], KeyEventId.RELEASE)
+            data: dict[str, str] = {
+                "key_id": key_id,
+                "event_id": KeyEventId.RELEASE.value,
+                "timestamp": current_timestamp()
+            }
+
+            controller.INSTANCE.was_released(key_id)
+            KEYLOGGER.log(data)
+            logging.info(json.dumps(data))
         # fi
     # htiw
 # fed
@@ -109,7 +134,7 @@ def handle_key_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
 def handle_mouse_move(mouse_x: int, mouse_y: int) -> None | Literal[False]:
     """Handle a mouse move event received by a pynput mouse listener.
 
-    If Minecraft is not the currently focused window, will pause the keylogger. 
+    If Minecraft is not the currently focused window, will pause the mouse and key loggers.
 
     Arguments
     ---------
@@ -119,23 +144,34 @@ def handle_mouse_move(mouse_x: int, mouse_y: int) -> None | Literal[False]:
     mouse_y
         The absolute y coordinate/position of the mouse pointer after the mouse move event.
     """    
-    with event_lock:
-        if mouse_listener_exit_event.is_set():
+    with EVENT_LOCK:
+        if MOUSE_LISTENER_EXIT_EVENT.is_set():
             logging.info("Stopped listening for mouse input")
 
             return False # return False to signal to pynput mouse listener to stop
         # fi
 
-        if (not mc_is_active_window()) and logc.INSTANCE.can_pause():
-            logc.INSTANCE.pause()
-            keylogger.pause()
-            mouselogger.pause()
+        # pause the logger if Minecraft is not focused
+        if (not mc_is_active_window()) and controller.INSTANCE.can_pause():
+            KEYLOGGER.pause()
+            MOUSELOGGER.pause()
+            controller.INSTANCE.pause()
 
-            return None
-        # fi
+        # handle logging of the mouse move event
+        elif controller.INSTANCE.can_log():
+            pos: None | tuple[int, int] = translate_monitor_pos(mouse_x, mouse_y)
 
-        if logc.INSTANCE.can_log():
-            mouselogger.log(mouse_x, mouse_y, MouseEventId.MOVE)
+            if pos is None: return None # not on primary monitor so ignore
+
+            data: dict[str, str | int] = {
+                "mouse_x": pos[0],
+                "mouse_y": pos[1],
+                "event_id": MouseEventId.MOVE.value,
+                "timestamp": current_timestamp()
+            }
+
+            MOUSELOGGER.log(data)
+            logging.info(json.dumps(data))
         # fi
 
         return None
@@ -143,7 +179,7 @@ def handle_mouse_move(mouse_x: int, mouse_y: int) -> None | Literal[False]:
 # fed
 
 def main() -> None:
-    """Start the pynput keyboard and mouse listener with event handlers in parallel."""
+    """Start the pynput keyboard and mouse listeners with event handlers in parallel."""
     kb_listener: keyboard.Listener = keyboard.Listener(
         on_press=handle_key_press,
         on_release=handle_key_release
@@ -152,14 +188,11 @@ def main() -> None:
 
     logging.info("Listening for keyboard input...")
     logging.info("Listening for mouse input...")
-
-    stop_char: str | None = config.LOGGER_CONTROLS["STOP"].char
-    exit_char: str | None = config.LOGGER_CONTROLS["EXIT"].char 
-    
-    logging.info(f"Logging is currently halted, press {stop_char} to start logging or {exit_char} to stop listening for inputs...")
+    logging.info(f"Logging is currently unstarted, press {STOP_KEY.char} to start logging or {EXIT_KEY.char} to stop listening for inputs...")
 
     kb_listener.start()
     mouse_listener.start()
+
     kb_listener.join()
     mouse_listener.join()
 
