@@ -3,3 +3,4 @@ __pycache__
 .mypy_cache
 .python-version
 *.swp
+test_window

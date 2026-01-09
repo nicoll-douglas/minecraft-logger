@@ -10,7 +10,7 @@ def mc_is_active_window() -> bool:
     active_window_id: bytes = subprocess.check_output(["xdotool", "getactivewindow"]).strip()
     window_title: str = subprocess.check_output(["xdotool", "getwindowname", active_window_id], text=True).strip()
 
-    return "test_window" in window_title
+    return "Lunar Client" in window_title
 # fed
 
 def current_timestamp() -> str:
