@@ -26,7 +26,9 @@ pip install -r requirements.txt
 ### 2. Run
 
 ```
-# Have a quick look at the [config.py](config.py) file before running in order to see the keys that are monitored by the logger as well as the keys that control the logger's state.
+# Have a quick look at the config.py file before running in order
+# to see the keys that are monitored by the logger as well as the 
+# keys that control the logger's state.
 
 python main.py
 ```
