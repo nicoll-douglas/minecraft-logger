@@ -4,6 +4,11 @@ from pathlib import Path
 from typing import TextIO, Literal
 import logger_controller as logc
 import logging
+import config
+
+STOP_CHAR: str | None = config.LOGGER_CONTROLS["STOP"].char
+PAUSE_CHAR: str | None = config.LOGGER_CONTROLS["PAUSE"].char
+EXIT_CHAR: str | None = config.LOGGER_CONTROLS["EXIT"].char
 
 class MinecraftEventLogger:
     """Represents a logger that logs events in a Minecraft window to a file."""
@@ -33,7 +38,7 @@ class MinecraftEventLogger:
 
         if self._log_file is None: return
 
-        logging.info(f"Paused logging to {self._log_file.name}")
+        logging.info(f"Paused logging to {self._log_file.name}, press {PAUSE_CHAR} to resume, {STOP_CHAR} to stop logging or {EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def resume(self) -> None:
@@ -46,7 +51,7 @@ class MinecraftEventLogger:
         writer: csv.DictWriter = self._create_csv_writer(text_stream)
         self._writer = writer # store new writer
 
-        logging.info(f"Resumed logging to {self._log_file.name}")
+        logging.info(f"Resumed logging to {self._log_file.name}, press {PAUSE_CHAR} to pause, {STOP_CHAR} to stop logging or {EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def stop(self) -> None:
@@ -60,7 +65,7 @@ class MinecraftEventLogger:
 
         if self._log_file is None: return
 
-        logging.info(f"Stopped logging to {self._log_file.name}")
+        logging.info(f"Stopped logging to {self._log_file.name}, press {STOP_CHAR} to start logging to new files or {EXIT_CHAR} to stop listening for inputs...")
         self._log_file = None
     # fed
 
@@ -81,7 +86,7 @@ class MinecraftEventLogger:
 
         writer.writeheader()
 
-        logging.info(f"Started logging to {self._log_file.name}")
+        logging.info(f"Started logging to {self._log_file.name}, press {STOP_CHAR} to stop logging, {PAUSE_CHAR} to pause or {EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def _open_log_stream(self, file_path: Path, mode: Literal["w", "a"]) -> TextIO:

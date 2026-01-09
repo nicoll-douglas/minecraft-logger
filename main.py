@@ -153,10 +153,17 @@ def main() -> None:
     logging.info("Listening for keyboard input...")
     logging.info("Listening for mouse input...")
 
+    stop_char: str | None = config.LOGGER_CONTROLS["STOP"].char
+    exit_char: str | None = config.LOGGER_CONTROLS["EXIT"].char 
+    
+    logging.info(f"Logging is currently halted, press {stop_char} to start logging or {exit_char} to stop listening for inputs...")
+
     kb_listener.start()
     mouse_listener.start()
     kb_listener.join()
     mouse_listener.join()
+
+    logging.info("Exiting...")
 # fed
 
 main()
