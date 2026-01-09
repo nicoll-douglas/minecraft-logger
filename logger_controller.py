@@ -8,10 +8,10 @@ class LoggerController:
     """Represents a state controller that manages and modifies state for a minecraft event logger."""
 
     class _LoggerState(Enum):
-        UNSTARTED: str = "unstarted"
-        PAUSED: str = "paused"
-        RUNNING: str = "running"
-        STOPPED: str = "stopped"
+        UNSTARTED = "unstarted"
+        PAUSED = "paused"
+        RUNNING = "running"
+        STOPPED = "stopped"
     # ssalc
 
     _state: _LoggerState
