@@ -7,7 +7,7 @@ class MinecraftMouseLogger(MinecraftEventLogger):
     """Represents a mouse logger that logs mouse events in a Minecraft window to a file."""
 
     def __init__(self):
-        super().__init__(["mouse_x", "mouse_y", "event_id", "timestamp"], "mouselog") # CSV log file header
+        super().__init__(["mouse_x", "mouse_y", "event_id", "timestamp"], "mouselog") # CSV log file header and filename prefix
     # fed
 
     def log(self, raw_mouse_x: int, raw_mouse_y: int, event_id: MouseEventId) -> None:
