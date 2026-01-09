@@ -80,6 +80,11 @@ def handle_key_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
     """Handle a key release event received by a pynput keyboard listener.
 
     If Minecraft is not the currently focused window, will pause the keylogger. 
+
+    Arguments
+    ---------
+    key
+        The key associated with the keyboard event.
     """
     with event_lock:
         if (not mc_is_active_window()) and logc.INSTANCE.can_pause():
@@ -102,6 +107,18 @@ def handle_key_release(key: keyboard.Key | keyboard.KeyCode | None) -> None:
 # fed
 
 def handle_mouse_move(mouse_x: int, mouse_y: int) -> None | Literal[False]:
+    """Handle a mouse move event received by a pynput mouse listener.
+
+    If Minecraft is not the currently focused window, will pause the keylogger. 
+
+    Arguments
+    ---------
+    mouse_x
+        The absolute x coordinate/position of the mouse pointer after the mouse move event.
+
+    mouse_y
+        The absolute y coordinate/position of the mouse pointer after the mouse move event.
+    """    
     with event_lock:
         if mouse_listener_exit_event.is_set():
             logging.info("Stopped listening for mouse input")

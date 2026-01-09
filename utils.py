@@ -20,7 +20,10 @@ def current_timestamp() -> str:
 # fed
 
 def translate_global_pos_to_primary_monitor_pos(x: int, y: int) -> None | tuple[int, int]:
-    """Translate the global position of the mouse pointer to local coordinates on the primary monitor."""
+    """Translate the global position of the mouse pointer to local coordinates on the primary monitor.
+
+    The translated coordinates should be in the range 0 <= x < 1920 and 0 <= y < 1080.
+    """
     monitors: list[screeninfo.common.Monitor] = screeninfo.get_monitors()
     monitor: screeninfo.common.Monitor = monitors[1] # primary monitor, implementation dependent
 
