@@ -3,9 +3,9 @@ from enum import Enum
 from pynput import keyboard
 from typing import Literal
 
-STOP_CHAR: str | None = config.LOGGER_CONTROLS["STOP"].char
-PAUSE_CHAR: str | None = config.LOGGER_CONTROLS["PAUSE"].char
-EXIT_CHAR: str | None = config.LOGGER_CONTROLS["EXIT"].char
+_STOP_CHAR: str | None = config.LOGGER_CONTROLS["STOP"].char
+_PAUSE_CHAR: str | None = config.LOGGER_CONTROLS["PAUSE"].char
+_EXIT_CHAR: str | None = config.LOGGER_CONTROLS["EXIT"].char
 
 class CsvLoggerController:
     """Represents a state controller that tracks and modifies state for one or more CSV loggers."""
@@ -29,28 +29,28 @@ class CsvLoggerController:
         """Set the logger to a 'stopped' state."""
         self._state = self._LoggerState.STOPPED
 
-        logging.info(f"Press {STOP_CHAR} to start logging to new files or {EXIT_CHAR} to stop listening for inputs...")
+        logging.info(f"Press {_STOP_CHAR} to start logging to new files or {_EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def start(self) -> None:
         """Set the logger to a 'started' state."""
         self._state = self._LoggerState.RUNNING
 
-        logging.info(f"Press {STOP_CHAR} to stop logging, {PAUSE_CHAR} to pause or {EXIT_CHAR} to stop listening for inputs...")
+        logging.info(f"Press {_STOP_CHAR} to stop logging, {_PAUSE_CHAR} to pause or {_EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def pause(self) -> None:
         """Set the logger to a 'paused' state."""
         self._state = self._LoggerState.PAUSED
 
-        logging.info(f"Press {PAUSE_CHAR} to resume, {STOP_CHAR} to stop logging or {EXIT_CHAR} to stop listening for inputs...")
+        logging.info(f"Press {_PAUSE_CHAR} to resume, {_STOP_CHAR} to stop logging or {_EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def resume(self) -> None:
         """Set the logger to a 'resumed' state."""
         self._state = self._LoggerState.RUNNING
 
-        logging.info(f"Press {PAUSE_CHAR} to pause, {STOP_CHAR} to stop logging or {EXIT_CHAR} to stop listening for inputs...")
+        logging.info(f"Press {_PAUSE_CHAR} to pause, {_STOP_CHAR} to stop logging or {_EXIT_CHAR} to stop listening for inputs...")
     # fed
 
     def was_pressed(self, key_id: str) -> None:
