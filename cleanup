@@ -1,4 +1,5 @@
 #!/bin/bash
+# A cleanup script to remove accumulated log files during testing
 
 rm keylog*
 rm mouselog*
