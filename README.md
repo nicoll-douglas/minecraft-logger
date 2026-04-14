@@ -32,3 +32,8 @@ pip install -r requirements.txt
 
 python main.py
 ```
+
+## Demo
+
+https://github.com/user-attachments/assets/66b21d61-daa0-4b3f-aa08-79cef404f9db
+
