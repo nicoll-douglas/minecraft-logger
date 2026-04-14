@@ -1,6 +1,6 @@
 # Minecraft Logger
 
-A key/mouse logger I use to log movement input in [Lunar Client](https://www.lunarclient.com/) to CSV files.
+A key/mouse logger I use to log movement input in [Lunar Client](https://www.lunarclient.com/) to CSV files. Just a little Python scripting project I did for fun.
 
 ## Run Locally
 
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 ```
 # Have a quick look at the config.py file before running in order
-# to see the keys that are monitored by the logger as well as the 
+# to see the keys that are monitored by the logger as well as the
 # keys that control the logger's state.
 
 python main.py
@@ -36,4 +36,3 @@ python main.py
 ## Demo
 
 https://github.com/user-attachments/assets/66b21d61-daa0-4b3f-aa08-79cef404f9db
-
